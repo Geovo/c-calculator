@@ -1,6 +1,8 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include "useful.h"
 
-int compute(int a, int b, char op) {
+long compute(long a, long b, char op) {
 //    printf("got a: %i | b: %i | op: %c\n", a, b, op);
     switch (op) {
         case '+':
@@ -10,7 +12,14 @@ int compute(int a, int b, char op) {
         case '*':
             return a * b;
         case '/':
+            /* Check if the second operand is 0 and operator is '/' */
+            if (b == 0)
+                die("Sorry, but you can't divide by zero.");
             return a / b;
+        case '%':
+            return a % b;
+        case '^':
+            return power(a, b);
         default:
             return -1;
     }
@@ -24,7 +33,10 @@ int prec(char p) {
             return 2;
         case '*':
         case '/':
+        case '%':
             return 3;
+        case '^':
+            return 4;
         default:
             return -1;
     }
@@ -41,7 +53,7 @@ int higher(char p, char last) {
     //printf("%c is higher than %c\n", p, last);
     if ((a = prec(p) != -1) && (b = prec(last) != -1))
         if (prec(p) > prec(last)) {
-    //        printf("%c is higher than %c\n", p, last);
+//            printf("%c is higher than %c\n", p, last);
             return 1;
         }
 
@@ -50,17 +62,17 @@ int higher(char p, char last) {
     return 0;
 }
 
-int parse_it(char *exp) {
+long parse_it(char *exp) {
     char *p = exp;
-    int nums[30];
+    long nums[30];
     char ops[30];
     ops[0] = ' ';
-    int opp; // ops pointer
-    int np; // nums pointer
-    opp = 1; // set them to zero
+    int opp; /* ops pointer */
+    int np; /* nums pointer */
+    opp = 1; /* set them to zero */
     np = 0;
-    int curr = 0; // used to parse nums
-    int curr_ch = 0; // to check if curr was changed between whitespaces and stuff
+    int curr = 0; /* used to parse nums */
+    int curr_ch = 0; /* to check if curr was changed between whitespaces and stuff */
     for (; *p != '\0'; p++) {
         if (*p >= '0' && *p <= '9') {
             curr = curr * 10 + *p - '0';
@@ -74,57 +86,75 @@ int parse_it(char *exp) {
             curr_ch = 0; // set it back after adding to the stack
         }
 
-        // in this part we will do the comparison
-        if (*p == '+' || *p == '-' || *p == '*' || *p == '/') {
+        /* Next goes the case if we hit a token that is an operator */
+        if (*p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '%' || *p == '^') {
+            /* if the opstack is empty or the current operator has a higher precedence, add it to the opstack */
             if (opp == 1 || higher(*p, ops[opp-1]))
-            //    if (higher(*p, ops[opp-1]))
-                // if the opstack is empty or the current operator has a higher precedence, add it to the opstack
-                    ops[opp++] = *p;
-
+                ops[opp++] = *p;
             else {
              /* Although if the current operator has lower precedence than the top of the stack,
               * pop off all the ones with higher precedence and calculate the product
               */
-              //higher(*p, ops[opp-1]);
-              int t = np - 1;
-              int test = compute(nums[np-2], nums[np-1], ops[--opp]);
-        //      printf("it's a test: %i | np is: %i\n", test, np);
-              nums[np-2] = test;
-        //      printf("nums[np-1]: %i\n", nums[np-1]);
-              np--;
-              ops[opp++] = *p;
-              //np = t+1;
+
+                /* Here we compute the result and put it back on the number stack */
+                //while(higher(ops[opp-1], *p) && opp > 1) {
+                //if (!higher(ops[opp-1], *p))
+                //    printf("not higher: %c >= %c\n", ops[opp-1], *p);
+                  long test = compute(nums[np-2], nums[np-1], ops[--opp]);
+                  //printf("test: %li\n", test);
+                  nums[np-2] = test;
+                  nums[--np] = 0;
+                //}
+                  ops[opp++] = *p;
             }
         }
     }
+    /* the last parsed curr has to be added to the number stack */
     nums[np++] = curr;
     ops[opp] = '\0';
     // done with parsing numbers and ops
     // DEBUG PRINT:
-    for (int i = 0; i <= np; i++)
-//        printf("nums[%i]: %i || ops[%i]: %c\n", i, nums[i], i, ops[i]);
 
-    // now the expression is parsed
-    // let's calculate the rest
+
+    /*
+     * now the expression is parsed
+     * let's calculate the rest
+     */
     while (opp > 0) {
-        int t = compute(nums[np-2], nums[np-1], ops[--opp]);
+        long t = compute(nums[np-2], nums[np-1], ops[--opp]);
         nums[np-2] = t;
         np--;
+    //    for (int i = 0; i <= np; i++)
+    //        printf("nums[%i]: %i || ops[%i]: %c\n", i, nums[i], i, ops[i]);
     }
 //    printf("result: %i\n", nums[0]);
     return nums[0];
 
 }
 
+long power(long what, long where) {
+    /* use a faster method later on */
+    long ret = what;
+    for (; where > 1; where--)
+        ret *= what;
+    return ret;
+}
+
+void die (char *msg) {
+    printf("%s\n", msg);
+    exit(1);
+}
+
 void test(char msg[]) {
-    printf("%s = %i\n", msg, parse_it(msg));
+    printf("%s = %li\n", msg, parse_it(msg));
 }
 
 int main() {
     //parse_it("1 + 5 * 10 - 9 / 3");
+    test("1 + 5 * 10 * 9 / 15 * 8 / 10 - 1 + 5");
     test("1 + 5 * 10 - 9 / 3");
-    test("1 + 5 * 10 - 9 / 3");
-    test("1 + 5 * 10 - 9");
+    test("1 + 5 + 10 + 13 % 2^ 3");
     test("1+5*10-9");
+    test("3+4*5/6-7");
     return 0;
 }

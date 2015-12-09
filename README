@@ -1,0 +1,24 @@
+To begin with, this already works.
+You can pull the repository and, if you use a UNIX-like OS you should be able
+to check out the first results by hitting "./run"
+Or just compile "calculator.c" and execute it.
+
+The code is a bit dirty, because I was fiddling with the algorithm of parsing
+and evaluating a mathematical expression.
+I'm going to clean it up very soon and also add brackets parsing.
+
+The calculator is based on the Shunting Yard algorithm, but it doesn't turn
+infix notation into Reverse Polish Notation (as that's often the case).
+But see for yourself and be free to comment on how bad or good I wrote
+the calculator.
+
+NOTE: This is not a professional project, rather an educational project
+
+I don't even know how much functionality this program should have, so let's
+just wait for it.
+
+
+Problems and Bugs:
+- All equally-important operators associate only from left to right (wrong for exponentials)
+- 2 ^ 3 ^ 4 == 2 ^ (3 ^ 4) <- that is the right answer.
+- TODO: provide a choice for right or left association
