@@ -71,6 +71,7 @@ long parse_it(char *exp) {
     int np; /* nums pointer */
     opp = 1; /* set them to zero */
     np = 0;
+    int sign = 1; // sign for the current number
     int curr = 0; /* used to parse nums */
     int curr_ch = 0; /* to check if curr was changed between whitespaces and stuff */
     for (; *p != '\0'; p++) {
@@ -81,9 +82,21 @@ long parse_it(char *exp) {
         }
         // if that's a parsed 0 then add it to the stack
         if (curr_ch) {
-            nums[np++] = curr;
+            nums[np++] = curr * sign;
             curr = 0;
             curr_ch = 0; // set it back after adding to the stack
+            sign = 1; /* Set the sign back to positive */
+        }
+
+        /* To avoid interference of the unary minus and the operator minus, we will add code
+         * that evaluates the unary minus (if there is one).
+         * It's important to remember, that we don't care about how much whitespace there is between the unary minus
+         * and the number itself. So we have to check if our ops stack has the same height as the nums stack
+         */
+         if (*p == '-' && (opp > np)) {
+            sign = -1;
+        //    printf("opp and np: %i | %i\n", opp, np);
+            continue;
         }
 
         /* Next goes the case if we hit a token that is an operator */
@@ -110,7 +123,7 @@ long parse_it(char *exp) {
         }
     }
     /* the last parsed curr has to be added to the number stack */
-    nums[np++] = curr;
+    nums[np++] = curr * sign;
     ops[opp] = '\0';
     // done with parsing numbers and ops
     // DEBUG PRINT:
@@ -145,16 +158,18 @@ void die (char *msg) {
     exit(1);
 }
 
-void test(char msg[]) {
-    printf("%s = %li\n", msg, parse_it(msg));
+void test(char msg[], long right) {
+    long r = parse_it(msg);
+    printf("%s | %.100s = %li\n", r == right ? "TRUE" : "FALSE", msg, r);
 }
 
 int main() {
     //parse_it("1 + 5 * 10 - 9 / 3");
-    test("1 + 5 * 10 * 9 / 15 * 8 / 10 - 1 + 5");
-    test("1 + 5 * 10 - 9 / 3");
-    test("1 + 5 + 10 + 13 % 2^ 3");
-    test("1+5*10-9");
-    test("3+4*5/6-7");
+    test("1 + 5 * 10 * -9", -449);
+    test("1 + 5 * 10 * -9   / 15 * 8 / 10 - - 1 + 5", -17);
+    test("1 + 5 * 10 - 9 / 3", 48);
+    test("1 + 5 + 10 + 13 % 2^ 3", 21);
+    test("1+5*10-9", 42);
+    test("3+4*5/6-7", -1);
     return 0;
 }
