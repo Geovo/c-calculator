@@ -1,3 +1,6 @@
+calculator
+!calculator.c
+
 # Object files
 *.o
 *.ko
