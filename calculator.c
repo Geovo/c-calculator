@@ -37,6 +37,11 @@ int prec(char p) {
             return 3;
         case '^':
             return 4;
+        case '(':
+            /* Here is the trick: we need to add all operators
+             * to the stack after the bracket, that's why it has a 'lower precedence' here
+             */
+            return 1;
         default:
             return -1;
     }
@@ -99,6 +104,34 @@ long parse_it(char *exp) {
             continue;
         }
 
+        /*
+         * The point of the bracket is that the parser works the same way as always,
+         * but when there's a closing bracket, we have to execute the whole
+         * bracket and putting it back to the stack
+         */
+         if (*p == '(') {
+             ops[opp++] = *p;
+            // np++; /* increment the np pointer to make place for the bracket operands */
+             continue;
+         }
+
+         if (*p == ')') {
+             while (ops[opp-1] != '(') {
+                 //for (int i = 0; i <= np; i++)
+                    //printf("nums[%i] -> %li | ops[%i] -> %c\n", i, nums[i], i, ops[i]);
+                 long test = compute(nums[np-2], nums[np-1], ops[--opp]);
+                 printf("in bracket: %li\n", test);
+                 nums[np-2] = test;
+                 nums[--np] = 0;
+             }
+             //ops[--opp] = ' ';
+             //np--;
+             printf("TEEST: np: %i | opp: %i\n", np, opp);
+//             for (int i = 0; i <= np; i++)
+//                printf("nums[%i] -> %li | ops[%i] -> %c\n", i, nums[i], i, ops[i]);
+            continue;
+         }
+
         /* Next goes the case if we hit a token that is an operator */
         if (*p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '%' || *p == '^') {
             /* if the opstack is empty or the current operator has a higher precedence, add it to the opstack */
@@ -114,7 +147,6 @@ long parse_it(char *exp) {
                 //if (!higher(ops[opp-1], *p))
                 //    printf("not higher: %c >= %c\n", ops[opp-1], *p);
                   long test = compute(nums[np-2], nums[np-1], ops[--opp]);
-                  //printf("test: %li\n", test);
                   nums[np-2] = test;
                   nums[--np] = 0;
                 //}
@@ -126,15 +158,18 @@ long parse_it(char *exp) {
     nums[np++] = curr * sign;
     ops[opp] = '\0';
     // done with parsing numbers and ops
-    // DEBUG PRINT:
 
+        for (int i = 0; i < np; i++)
+            printf("nums[%i]: %li || ops[%i]: %c\n", i, nums[i], i, ops[i]);
 
     /*
      * now the expression is parsed
      * let's calculate the rest
      */
+     printf("compute opp: %i | np: %i\n", opp, np);
     while (opp > 0) {
         long t = compute(nums[np-2], nums[np-1], ops[--opp]);
+        printf("compute nums[%i-2]: %li %c nums[%i-1]%li = %li\n", np, nums[np-2], ops[opp], np, nums[np-1], t);
         nums[np-2] = t;
         np--;
     //    for (int i = 0; i <= np; i++)
@@ -171,5 +206,6 @@ int main() {
     test("1 + 5 + 10 + 13 % 2^ 3", 21);
     test("1+5*10-9", 42);
     test("3+4*5/6-7", -1);
+    test("5 * (3 + 2)", 25);
     return 0;
 }
