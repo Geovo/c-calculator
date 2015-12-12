@@ -22,3 +22,5 @@ Problems and Bugs:
 - All equally-important operators associate only from left to right (wrong for exponentials)
 - 2 ^ 3 ^ 4 == 2 ^ (3 ^ 4) <- that is the right answer.
 - TODO: provide a choice for right or left association
+- TODO: provide floating-point arithmetics and floating point notation as well as scientific notation (e.g. 1.54E-12)
+- TODO: write a test suite (probably in Ruby)

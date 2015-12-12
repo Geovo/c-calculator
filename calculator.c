@@ -83,7 +83,7 @@ long parse_it(char *exp) {
 
         /* DEBUG: */
 //        for (int i = 0; i < np; i++)
-             printf("nums[%i]: %li || ops[%i]: %c\n", np-1, nums[np-1], opp-1, ops[opp-1]);
+             //printf("nums[%i]: %li || ops[%i]: %c\n", np-1, nums[np-1], opp-1, ops[opp-1]);
 
         if (*p >= '0' && *p <= '9') {
             curr = curr * 10 + *p - '0';
@@ -105,7 +105,6 @@ long parse_it(char *exp) {
          */
          if (*p == '-' && (opp > np) && (ops[opp-1] != '(')) {
             sign = -1;
-        //    printf("opp and np: %i | %i\n", opp, np);
             continue;
         }
 
@@ -122,17 +121,11 @@ long parse_it(char *exp) {
 
          if (*p == ')') {
              while (ops[opp-1] != '(') {
-                 //for (int i = 0; i <= np; i++)
-                    //printf("nums[%i] -> %li | ops[%i] -> %c\n", i, nums[i], i, ops[i]);
                  long test = compute(nums[np-2], nums[np-1], ops[--opp]);
-    //             printf("in bracket: %li\n", test);
                  nums[np-2] = test;
                  nums[--np] = 0;
              }
              ops[--opp] = ' ';
-             //printf("bracket num: %li\n", nums[np-2]);
-
-    //         printf("TEEST: np: %i | opp: %i\n", np, opp);
             continue;
          }
 
@@ -200,11 +193,13 @@ void die (char *msg) {
 
 void test(char msg[], long right) {
     long r = parse_it(msg);
-    printf("%s | %.100s = %li\n", r == right ? "TRUE" : "FALSE", msg, r);
+    printf("%s | Predicted: %li | %.100s = %li\n", r == right ? "TRUE" : "FALSE", right, msg, r);
 }
 
 int main() {
-    //parse_it("1 + 5 * 10 - 9 / 3");
+    puts("================================================================================");
+    puts("Simple random tests:");
+    puts("================================================================================");
     test("1 + 5 * 10 * -9", -449);
     test("1 + 5 * 10 * -9   / 15 * 8 / 10 - - 1 + 5", -17);
     test("1 + 5 * 10 - 9 / 3", 48);
@@ -213,6 +208,6 @@ int main() {
     test("3+4*5/6-7", -1);
     test("5 * (3 + 2)", 25);
     test("5 * (3 + 2) * 5", 125);
-    test("5 * (3 + 2) + (4 + (3 - 2))", 30);
-    return 0;
+    test("5 * (3 + 2) + (4 + (3 - (8 - 8)))", 32);
+        return 0;
 }
