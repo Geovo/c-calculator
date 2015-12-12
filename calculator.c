@@ -80,6 +80,11 @@ long parse_it(char *exp) {
     int curr = 0; /* used to parse nums */
     int curr_ch = 0; /* to check if curr was changed between whitespaces and stuff */
     for (; *p != '\0'; p++) {
+
+        /* DEBUG: */
+//        for (int i = 0; i < np; i++)
+             printf("nums[%i]: %li || ops[%i]: %c\n", np-1, nums[np-1], opp-1, ops[opp-1]);
+
         if (*p >= '0' && *p <= '9') {
             curr = curr * 10 + *p - '0';
             curr_ch = 1;
@@ -98,7 +103,7 @@ long parse_it(char *exp) {
          * It's important to remember, that we don't care about how much whitespace there is between the unary minus
          * and the number itself. So we have to check if our ops stack has the same height as the nums stack
          */
-         if (*p == '-' && (opp > np)) {
+         if (*p == '-' && (opp > np) && (ops[opp-1] != '(')) {
             sign = -1;
         //    printf("opp and np: %i | %i\n", opp, np);
             continue;
@@ -120,15 +125,14 @@ long parse_it(char *exp) {
                  //for (int i = 0; i <= np; i++)
                     //printf("nums[%i] -> %li | ops[%i] -> %c\n", i, nums[i], i, ops[i]);
                  long test = compute(nums[np-2], nums[np-1], ops[--opp]);
-                 printf("in bracket: %li\n", test);
+    //             printf("in bracket: %li\n", test);
                  nums[np-2] = test;
                  nums[--np] = 0;
              }
-             //ops[--opp] = ' ';
-             //np--;
-             printf("TEEST: np: %i | opp: %i\n", np, opp);
-//             for (int i = 0; i <= np; i++)
-//                printf("nums[%i] -> %li | ops[%i] -> %c\n", i, nums[i], i, ops[i]);
+             ops[--opp] = ' ';
+             //printf("bracket num: %li\n", nums[np-2]);
+
+    //         printf("TEEST: np: %i | opp: %i\n", np, opp);
             continue;
          }
 
@@ -155,21 +159,22 @@ long parse_it(char *exp) {
         }
     }
     /* the last parsed curr has to be added to the number stack */
-    nums[np++] = curr * sign;
+    if (curr_ch)
+        nums[np++] = curr * sign;
     ops[opp] = '\0';
     // done with parsing numbers and ops
 
-        for (int i = 0; i < np; i++)
-            printf("nums[%i]: %li || ops[%i]: %c\n", i, nums[i], i, ops[i]);
+    //    for (int i = 0; i < np; i++)
+    //        printf("nums[%i]: %li || ops[%i]: %c\n", i, nums[i], i, ops[i]);
 
     /*
      * now the expression is parsed
      * let's calculate the rest
      */
-     printf("compute opp: %i | np: %i\n", opp, np);
+     //printf("compute opp: %i | np: %i\n", opp, np);
     while (opp > 0) {
         long t = compute(nums[np-2], nums[np-1], ops[--opp]);
-        printf("compute nums[%i-2]: %li %c nums[%i-1]%li = %li\n", np, nums[np-2], ops[opp], np, nums[np-1], t);
+        //printf("compute nums[%i-2]: %li %c nums[%i-1]%li = %li\n", np, nums[np-2], ops[opp], np, nums[np-1], t);
         nums[np-2] = t;
         np--;
     //    for (int i = 0; i <= np; i++)
@@ -207,5 +212,7 @@ int main() {
     test("1+5*10-9", 42);
     test("3+4*5/6-7", -1);
     test("5 * (3 + 2)", 25);
+    test("5 * (3 + 2) * 5", 125);
+    test("5 * (3 + 2) + (4 + (3 - 2))", 30);
     return 0;
 }
