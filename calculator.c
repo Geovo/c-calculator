@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include "useful.h"
 
-long compute(long a, long b, char op) {
+long double compute(long double a, long double b, char op) {
 //    printf("got a: %i | b: %i | op: %c\n", a, b, op);
     switch (op) {
         case '+':
@@ -17,7 +17,7 @@ long compute(long a, long b, char op) {
                 die("Sorry, but you can't divide by zero.");
             return a / b;
         case '%':
-            return a % b;
+            return (long double) ((long long)a % (long long)b);
         case '^':
             return power(a, b);
         default:
@@ -67,17 +67,20 @@ int higher(char p, char last) {
     return 0;
 }
 
-long parse_it(char *exp) {
+long double parse_it(char *exp) {
     char *p = exp;
-    long nums[30];
-    char ops[30];
+    long double nums[MAX_EXPR];
+    char ops[MAX_EXPR];
     ops[0] = ' ';
     int opp; /* ops pointer */
     int np; /* nums pointer */
     opp = 1; /* set them to zero */
     np = 0;
     int sign = 1; // sign for the current number
-    int curr = 0; /* used to parse nums */
+    long long tail = 0;
+    long double curr = 0; /* used to parse nums */
+    long double commas = 1; /* used to set comma back in floats */
+    int in_float = 0; /* check if inside a float */
     int curr_ch = 0; /* to check if curr was changed between whitespaces and stuff */
     for (; *p != '\0'; p++) {
 
@@ -86,14 +89,34 @@ long parse_it(char *exp) {
              //printf("nums[%i]: %li || ops[%i]: %c\n", np-1, nums[np-1], opp-1, ops[opp-1]);
 
         if (*p >= '0' && *p <= '9') {
+            /* If we are parsing the after-comma part of a floating-point, we should also check
+             * if the after-comma part is a non-zero value
+             */
+            if (in_float) {
+                commas *= 10;
+                tail = tail * 10 + (*p - '0');
+            }
             curr = curr * 10 + *p - '0';
             curr_ch = 1;
             continue;
         }
+
+        // let's add floating point functionality
+        if ((*p == '.') && curr_ch) {
+            //commas *= 10; /* multiply commas by 10 for every comma shift */
+            in_float = 1;
+            continue;
+        }
         // if that's a parsed 0 then add it to the stack
         if (curr_ch) {
-            nums[np++] = curr * sign;
+            if (tail > 0) {
+                nums[np++] = (long double) ((curr * sign) / commas);
+            } else
+                nums[np++] = (long double) (curr * sign);
             curr = 0;
+            commas = 1;
+            tail = 0;
+            in_float = 0;
             curr_ch = 0; // set it back after adding to the stack
             sign = 1; /* Set the sign back to positive */
         }
@@ -121,7 +144,7 @@ long parse_it(char *exp) {
 
          if (*p == ')') {
              while (ops[opp-1] != '(') {
-                 long test = compute(nums[np-2], nums[np-1], ops[--opp]);
+                 long double test = compute(nums[np-2], nums[np-1], ops[--opp]);
                  nums[np-2] = test;
                  nums[--np] = 0;
              }
@@ -143,7 +166,7 @@ long parse_it(char *exp) {
                 //while(higher(ops[opp-1], *p) && opp > 1) {
                 //if (!higher(ops[opp-1], *p))
                 //    printf("not higher: %c >= %c\n", ops[opp-1], *p);
-                  long test = compute(nums[np-2], nums[np-1], ops[--opp]);
+                  long double test = compute(nums[np-2], nums[np-1], ops[--opp]);
                   nums[np-2] = test;
                   nums[--np] = 0;
                 //}
@@ -152,8 +175,14 @@ long parse_it(char *exp) {
         }
     }
     /* the last parsed curr has to be added to the number stack */
-    if (curr_ch)
-        nums[np++] = curr * sign;
+    if (curr_ch) {
+        if (tail > 0) {
+            nums[np++] = (long double) (curr * sign / commas);
+        } else {
+            nums[np++] = (long double) (curr * sign);
+        }
+    }
+
     ops[opp] = '\0';
     // done with parsing numbers and ops
 
@@ -166,19 +195,19 @@ long parse_it(char *exp) {
      */
      //printf("compute opp: %i | np: %i\n", opp, np);
     while (opp > 0) {
-        long t = compute(nums[np-2], nums[np-1], ops[--opp]);
+        long double t = compute(nums[np-2], nums[np-1], ops[--opp]);
         //printf("compute nums[%i-2]: %li %c nums[%i-1]%li = %li\n", np, nums[np-2], ops[opp], np, nums[np-1], t);
         nums[np-2] = t;
         np--;
     //    for (int i = 0; i <= np; i++)
     //        printf("nums[%i]: %i || ops[%i]: %c\n", i, nums[i], i, ops[i]);
     }
-//    printf("result: %i\n", nums[0]);
+    //printf("result: %Lf\n", nums[0]);
     return nums[0];
 
 }
 
-long power(long what, long where) {
+long double power(long double what, long double where) {
     /* use a faster method later on */
     long ret = what;
     for (; where > 1; where--)
@@ -191,9 +220,15 @@ void die (char *msg) {
     exit(1);
 }
 
-void test(char msg[], long right) {
-    long r = parse_it(msg);
-    printf("%s | Predicted: %li | %.100s = %li\n", r == right ? "TRUE" : "FALSE", right, msg, r);
+void test(char msg[], long double right) {
+    long double d = right;
+    long double r = parse_it(msg);
+    //unsigned long = right - r;
+    int res = ((int)(right - r)) == 0 ? 1 : 0;
+    if (r - (long long)r == 0)
+        printf("%s | Predicted: %lli | %.100s = %lli\n", res ? "TRUE" : "FALSE", (long long)right, msg, (long long)r);
+    else
+        printf("%s | Predicted: %Lf | %.100s = %Lf\n", res ? "TRUE" : "FALSE", right, msg, r);
 }
 
 int main() {
@@ -209,5 +244,7 @@ int main() {
     test("5 * (3 + 2)", 25);
     test("5 * (3 + 2) * 5", 125);
     test("5 * (3 + 2) + (4 + (3 - (8 - 8)))", 32);
+    test("5 / 2", 2.5);
+    test("2.5 + 2.6", 5.1);
         return 0;
 }
