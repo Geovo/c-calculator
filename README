@@ -17,6 +17,23 @@ NOTE: This is not a professional project, rather an educational project
 I don't even know how much functionality this program should have, so let's
 just wait for it.
 
+=========================================================
+
+Well, the calculator has a few issues:
+1. The interval of numbers is pretty limited. The biggest number you can create is a long double
+  I'm currently building a little Bignum-module, so that it could handle numbers up to 100'000 
+  digits. If needed, there can be more, but 100'000 is fine for now. For that I need a memory
+  pooling system, so that even if the calculator crashes, there'd be no memory leakage.
+2. You can't use variables
+  This one is actually already resolved, I built a little hash table that uses binary search for
+  finding a symbol (so it's actually a hash-tree). Again, to properly handle the memory part of
+  the program, I'll need a memory pooling system. It will be simple, but also good enough to 
+  handle the tasks. I also think about adding a little String functionality as in higher-level
+  languages (although in this case the functionality of this project will exceed its planned 
+  complexity).
+
+There is no real development of the calculator's core itself(parser, associativity etc), 
+but rather on the parts (modules) of the whole program.
 
 Problems and Bugs:
 - All equally-important operators associate only from left to right (wrong for exponentials)
