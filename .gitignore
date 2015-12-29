@@ -1,5 +1,6 @@
 calculator
 !calculator.c
+bignum
 
 # Object files
 *.o
