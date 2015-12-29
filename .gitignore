@@ -1,6 +1,7 @@
 calculator
 !calculator.c
-bignum
+!bignum/*
+bignum/bignum
 
 # Object files
 *.o
